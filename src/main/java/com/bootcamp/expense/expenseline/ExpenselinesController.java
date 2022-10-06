@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.bootcamp.expense.expense.ExpenseRepository;
+import com.bootcamp.expense.expense.ExpensesController;
 
 @CrossOrigin
 @RestController
@@ -32,6 +33,7 @@ public class ExpenselinesController {
 			expenseTotal += expenseline.getItem().getPrice() * expenseline.getQuantity();
 		}
 		expense.setTotal(expenseTotal);
+		expense.setStatus(ExpensesController.MODIFIED);
 		expRepo.save(expense);
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
@@ -91,7 +93,7 @@ public class ExpenselinesController {
 		}
 		var expenseline = explOpt.get();
 		explRepo.delete(expenseline);
-		var respEntity = this.recalcExpenseTotal(expenseline.getExpense().getId());
+		var respEntity = recalcExpenseTotal(expenseline.getExpense().getId());
 		if(respEntity.getStatusCode() != HttpStatus.OK) {
 			throw new Exception("Recalculate expense total failed!");
 		}

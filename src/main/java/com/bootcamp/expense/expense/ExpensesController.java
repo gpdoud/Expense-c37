@@ -15,11 +15,12 @@ import com.bootcamp.expense.employee.EmployeeRepository;
 @RequestMapping("/api/expenses")
 public class ExpensesController {
 	
-	private final String NEW = "NEW";
-	private final String REVIEW = "REVIEW";
-	private final String APPROVED = "APPROVED";
-	private final String REJECTED = "REJECTED";
-	private final String PAID = "PAID";
+	public static final String NEW = "NEW";
+	public static final String MODIFIED = "MODIFIED";
+	public static final String REVIEW = "REVIEW";
+	public static final String APPROVED = "APPROVED";
+	public static final String REJECTED = "REJECTED";
+	public static final String PAID = "PAID";
 
 	@Autowired
 	private ExpenseRepository expRepo;
@@ -154,7 +155,7 @@ public class ExpensesController {
 		employee.setExpensesDue(employee.getExpensesDue() - expense.getTotal());
 		empRepo.save(employee);
 	}
-
+	
 	@SuppressWarnings("rawtypes")
 	@DeleteMapping("{id}")
 	public ResponseEntity deleteExpense(@PathVariable int id) throws Exception {
