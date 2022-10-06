@@ -59,14 +59,16 @@ public class ExpensesController {
 	
 	@SuppressWarnings("rawtypes")
 	@PutMapping("{id}")
-	public ResponseEntity putExpense(@PathVariable int id, @RequestBody Expense expense) {
+	public ResponseEntity putExpense(@PathVariable int id, @RequestBody Expense expense) throws Exception {
 		if(expense.getId() == 0 || expense.getId() != id) {
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
-		var ord = expRepo.findById(expense.getId());
-		if(ord.isEmpty()) {
+		var exp = expRepo.findById(expense.getId());
+		if(exp.isEmpty()) {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
+		if(ExpenseIsPaid(expense.getId()))
+			return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
 		expRepo.save(expense);
 		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 	}
@@ -75,6 +77,8 @@ public class ExpensesController {
 	@PutMapping("review/{id}")
 	public ResponseEntity reviewExpense(@PathVariable int id, @RequestBody Expense expense) throws Exception {
 		// expense.Status = (expense.Total <= 200) ? "APPROVED" : "REVIEW";
+		if(ExpenseIsPaid(expense.getId()))
+			return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
 		String newStatus = expense.getTotal() <= 200 ? APPROVED : REVIEW; 
 		expense.setStatus(newStatus);
 		var respEntity = putExpense(id, expense);
@@ -86,6 +90,8 @@ public class ExpensesController {
 	@SuppressWarnings("rawtypes")
 	@PutMapping("approve/{id}")
 	public ResponseEntity approveExpense(@PathVariable int id, @RequestBody Expense expense) throws Exception {
+		if(ExpenseIsPaid(expense.getId()))
+			return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
 		expense.setStatus(APPROVED);
 		var respEntity = putExpense(id, expense);
 		ExpenseApprovedSet(expense);
@@ -95,6 +101,8 @@ public class ExpensesController {
 	@SuppressWarnings("rawtypes")
 	@PutMapping("reject/{id}")
 	public ResponseEntity rejectExpense(@PathVariable int id, @RequestBody Expense expense) throws Exception {
+		if(ExpenseIsPaid(expense.getId()))
+			return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
 		var prevStatus = expense.getStatus();
 		expense.setStatus(REJECTED);
 		if(prevStatus.equals(APPROVED))
@@ -105,6 +113,8 @@ public class ExpensesController {
 	@SuppressWarnings("rawtypes")
 	@PutMapping("pay/{expenseId}")
 	public ResponseEntity payExpense(@PathVariable int expenseId) throws Exception {
+		if(ExpenseIsPaid(expenseId))
+			return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
 		Optional<Expense> optExpense = expRepo.findById(expenseId);
 		if(optExpense.isEmpty())
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -147,22 +157,21 @@ public class ExpensesController {
 
 	@SuppressWarnings("rawtypes")
 	@DeleteMapping("{id}")
-	public ResponseEntity deleteExpense(@PathVariable int id) {
-		var ord = expRepo.findById(id);
-		if(ord.isEmpty()) {
+	public ResponseEntity deleteExpense(@PathVariable int id) throws Exception {
+		var exp = expRepo.findById(id);
+		if(exp.isEmpty()) {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
-		expRepo.delete(ord.get());
+		if(ExpenseIsPaid(exp.get().getId()))
+			return new ResponseEntity<>(HttpStatus.LOCKED);
+		expRepo.delete(exp.get());
 		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 	}
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+	private boolean ExpenseIsPaid(int expenseId) throws Exception {
+		var expense = expRepo.findById(expenseId);
+		if(expense.isEmpty())
+			throw new Exception("Expense not found");
+		return expense.get().getStatus().equals(PAID);
+	}
 }
