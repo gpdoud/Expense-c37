@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.bootcamp.expense.employee.EmployeeRepository;
 import com.bootcamp.expense.expense.ExpenseRepository;
 import com.bootcamp.expense.expense.ExpensesController;
 
@@ -17,9 +18,11 @@ public class ExpenselinesController {
 	private ExpenselineRepository explRepo;
 	@Autowired
 	private ExpenseRepository expRepo;
+	@Autowired
+	private EmployeeRepository empRepo;
 	
 	@SuppressWarnings("rawtypes")
-	private ResponseEntity recalcExpenseTotal(int expenseId) {
+	private ResponseEntity recalcExpenseTotal(int expenseId) throws Exception {
 		var expOpt = expRepo.findById(expenseId);
 		if(expOpt.isEmpty()) {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -33,6 +36,9 @@ public class ExpenselinesController {
 			expenseTotal += expenseline.getItem().getPrice() * expenseline.getQuantity();
 		}
 		expense.setTotal(expenseTotal);
+		if(expense.getStatus().equals(ExpensesController.APPROVED)) {
+			ExpensesController.ExpenseApprovedUnSet(expense, empRepo);
+		}
 		expense.setStatus(ExpensesController.MODIFIED);
 		expRepo.save(expense);
 		return new ResponseEntity<>(HttpStatus.OK);

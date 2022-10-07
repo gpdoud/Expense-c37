@@ -84,7 +84,7 @@ public class ExpensesController {
 		expense.setStatus(newStatus);
 		var respEntity = putExpense(id, expense);
 		if(expense.getStatus().equals(APPROVED))
-			ExpenseApprovedSet(expense);
+			ExpenseApprovedSet(expense, empRepo);
 		return respEntity;
 	}
 	
@@ -95,7 +95,7 @@ public class ExpensesController {
 			return new ResponseEntity<>(HttpStatus.UNPROCESSABLE_ENTITY);
 		expense.setStatus(APPROVED);
 		var respEntity = putExpense(id, expense);
-		ExpenseApprovedSet(expense);
+		ExpenseApprovedSet(expense, empRepo);
 		return respEntity;
 	}
 
@@ -107,7 +107,7 @@ public class ExpensesController {
 		var prevStatus = expense.getStatus();
 		expense.setStatus(REJECTED);
 		if(prevStatus.equals(APPROVED))
-			ExpenseApprovedUnSet(expense);
+			ExpenseApprovedUnSet(expense, empRepo);
 		return putExpense(id, expense);
 	}
 	
@@ -123,12 +123,12 @@ public class ExpensesController {
 		if(!expense.getStatus().equals(APPROVED))
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		expense.setStatus(PAID);
-		ExpensePaid(expense);
+		ExpensePaid(expense, empRepo);
 		expRepo.save(expense);
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
-	private void ExpenseApprovedSet(Expense expense) throws Exception {
+	public static void ExpenseApprovedSet(Expense expense, EmployeeRepository empRepo) throws Exception {
 		Optional<Employee> optEmployee = empRepo.findById(expense.getEmployee().getId());
 		if(optEmployee.isEmpty())
 			throw new Exception("Employee for expense not found");
@@ -137,16 +137,16 @@ public class ExpensesController {
 		empRepo.save(employee);
 	}
 	
-	private void ExpenseApprovedUnSet(Expense expense)  throws Exception {
+	public static void ExpenseApprovedUnSet(Expense expense, EmployeeRepository empRepo)  throws Exception {
 		Optional<Employee> optEmployee = empRepo.findById(expense.getEmployee().getId());
 		if(optEmployee.isEmpty())
 			throw new Exception("Employee for expense not found");
 		var employee = optEmployee.get();
-		employee.setExpensesDue(employee.getExpensesDue() - expense.getTotal());
+		employee.setExpensesDue(employee.getExpensesDue() - expense.getPrevTotal());
 		empRepo.save(employee);
 	}
 
-	private void ExpensePaid(Expense expense) throws Exception {
+	public static void ExpensePaid(Expense expense, EmployeeRepository empRepo) throws Exception {
 		Optional<Employee> optEmployee = empRepo.findById(expense.getEmployee().getId());
 		if(optEmployee.isEmpty())
 			throw new Exception("Employee for expense not found");

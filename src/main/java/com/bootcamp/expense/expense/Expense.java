@@ -21,6 +21,8 @@ public class Expense {
 	private String status;
 	@Column(columnDefinition="decimal(11,2) not null default 0")
 	private double total;
+	@Column(columnDefinition="decimal(11,2) not null default 0")
+	private double prevTotal;
 	
 	@ManyToOne(optional=false)
 	@JoinColumn(name="employeeId", columnDefinition="int")
@@ -61,7 +63,20 @@ public class Expense {
 	}
 
 	public void setTotal(double total) {
+		this.prevTotal = this.total;
 		this.total = total;
+	}
+
+	public double getPrevTotal() {
+		return prevTotal;
+	}
+
+	public void setPrevTotal(double prevTotal) {
+		this.prevTotal = prevTotal;
+	}
+
+	public void setExpenselines(List<Expenseline> expenselines) {
+		this.expenselines = expenselines;
 	}
 
 	public String getStatus() {
